@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Client</title>
+    <style>
+        body, html { height: 100%; margin: 0; font-family: sans-serif; }
+        body { display: flex; justify-content: center; align-items: center; background-color: #222; color: white; text-align: center; transition: background-color 0.1s ease; }
+        h1 { font-size: 2rem; }
+    </style>
+</head>
+<body>
+    <div>
+        <h1 id="phone-title">Ready 🎧</h1>
+        <p>Listening for the signal...</p>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { firebaseConfig } from './firebase-config.js';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash;
+            let phoneId = "Client";
+            if (hash && hash.startsWith('#phone')) {
+                phoneId = hash.substring(1);
+            }
+            document.title = `Detection ${phoneId}`;
+            document.getElementById('phone-title').innerText = `${phoneId}: Ready 🎧`;
+        });
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const audio = new Audio('https://cdn.pixabay.com/download/audio/2021/08/04/audio_16cc0937a4.mp3');
+        audio.preload = 'auto';
+        let isFirstRun = true;
+        const triggerDocRef = doc(db, "gunshot", "trigger");
+
+        onSnapshot(triggerDocRef, (doc) => {
+            if (isFirstRun) { isFirstRun = false; return; }
+            document.body.style.backgroundColor = 'red';
+            audio.currentTime = 0;
+            audio.play().catch(e => console.error("Audio play failed:", e));
+            setTimeout(() => { document.body.style.backgroundColor = '#222'; }, 300);
+        });
+    </script>
+</body>
+</html>
